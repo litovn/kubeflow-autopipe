@@ -42,7 +42,7 @@ def main(args):
     execute_command(command)
 
     audio, sr = librosa.load(audio_path, sr=22050, mono=True)
-    duration = librosa.get_duration(audio)
+    duration = librosa.get_duration(y=audio, sr=sr)
     
     max_sentence_lenght = 30
     min_sentence_lenght = 6
