@@ -1,15 +1,15 @@
 # Define parent image, alpine for efficiency
-FROM python:3.8-alpine
+FROM python:3.8-bullseye
 
 WORKDIR /usr/src/app
 
 # Install system packages
 COPY requirements.sys ./
-RUN apk add --no-cache $(cat requirements.sys)
+RUN apt-get update && xargs -a requirements.sys apt-get install -y && rm -rf /var/lib/apt/lists/*
 
 # Install python packages
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.tx
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
