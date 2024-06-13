@@ -1,0 +1,16 @@
+# Define parent image, alpine for efficiency
+FROM python:3.8-alpine
+
+WORKDIR /usr/src/app
+
+# Install system packages
+COPY requirements.sys ./
+RUN apk add --no-cache $(cat requirements.sys)
+
+# Install python packages
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.tx
+
+COPY . .
+
+CMD ["python", "main.py"]
