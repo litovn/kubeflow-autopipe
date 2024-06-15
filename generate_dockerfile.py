@@ -3,9 +3,22 @@ import yaml
 import subprocess
 
 
+def cleanup_untagged_images():
+    """
+    Removes untagged Docker images from local machine
+    """
+    remove_command = ["docker", "image", "prune", "-f"]
+    result = subprocess.run(remove_command, capture_output=True, text=True)
+    if result.returncode == 0:
+        print("[docker_cleanup]: Successfully removed untagged images.")
+    else:
+        print(f"[docker_cleanup]: Error removing untagged images: {result.stderr}")
+
+
 def generate_dockerfile(component, template_path, base_dir_path):
     """
     Generate Dockerfile for a given component, using the dockerfile.template
+
     :param component: component name to generate dockerfile for
     :param template_path: path to the dockerfile.template
     :param base_path: base path where component directories are located
@@ -30,8 +43,6 @@ def generate_dockerfile(component, template_path, base_dir_path):
     else:
         print(f"[docker_generate]: Failed to build Docker image for {component}: {result.stderr}")
 
-    return result
-
 
 if __name__ == '__main__':
     # Load the application DAG from the YAML file
@@ -42,6 +53,9 @@ if __name__ == '__main__':
     base_dir_path = 'components'
     template_path = 'src/dockerfile.template'
 
+    print(f"Welcome to docker image generator, application starting...\n")
     # Generate Dockerfiles for each component
     for component in app_dag['System']['components']:
         generate_dockerfile(component, template_path, base_dir_path)
+    # Remove previous unused images
+    cleanup_untagged_images()
