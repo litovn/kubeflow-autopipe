@@ -33,6 +33,7 @@ spec:
       storage: {storage_size}
   storageClassName: local-path
 """
+    # Create the defined PVC to your local machine
     with subprocess.Popen(["kubectl", "apply", "-f", "-"], stdin=subprocess.PIPE, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
         stdout, stderr = process.communicate(input=pvc_yaml)
         if process.returncode != 0:
@@ -71,6 +72,7 @@ spec:
     persistentVolumeClaim:
       claimName: {pvc_name}
 """
+    # Create the defined Pod
     with subprocess.Popen(["kubectl", "apply", "-f", "-"], stdin=subprocess.PIPE, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
         stdout, stderr = process.communicate(input=pvc_yaml)
         if process.returncode != 0:
@@ -80,12 +82,21 @@ spec:
     logging.info("Pod created successfully. Proceeding with file copy...")
     time.sleep(10)
 
+    # Copy the contents from the PVC to a defined path
     cp_command = ["kubectl", "cp", f"{NAMESPACE}/pvc-access-pod:/mnt/data", local_path]
     cp_process = subprocess.run(cp_command, capture_output=True, text=True)
     if cp_process.returncode == 0:
         logging.info("Files copied successfully")
     else:
         logging.error(f"Error copying files: {cp_process.stderr}")
+
+    # Delete the defined Pod
+    rm_command = ["kubectl", "delete", "pod", "pvc-access-pod", "-n", NAMESPACE]
+    rm_process = subprocess.run(rm_command, capture_output=True, text=True)
+    if rm_process.returncode == 0:
+        logging.info("Temporary pod deleted successfully")
+    else:
+        logging.error(f"Error deleting pod 'pvc-access-pod': {rm_process.stderr}")
 
 
 def delete_pvc(pvc_name: str):
@@ -95,6 +106,7 @@ def delete_pvc(pvc_name: str):
     :param pvc_name: The name of the PVC to delete
     :return: True if the PVC was deleted successfully, False otherwise
     """
+    # Delete the defined PVC
     delete_command = ["kubectl", "delete", "pvc", pvc_name, "-n", NAMESPACE]
     result = subprocess.run(delete_command, capture_output=True, text=True)
 
