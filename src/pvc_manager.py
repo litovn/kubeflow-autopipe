@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO, format='[%(asctime)s] - %(message)s', da
 NAMESPACE = 'team-1'
 
 
-def create_pvc(storage_size='5Gi'):
+def create_pvc(storage_size: str = '5Gi'):
     """
     Creates a Kubernetes PersistentVolumeClaim with a unique UUID to ensure it does not collide with existing PVC names
     The PVC is configured with the specifications used by DeployKF
@@ -112,7 +112,5 @@ def delete_pvc(pvc_name: str):
 
     if result.returncode == 0:
         logging.info(f"PVC {pvc_name} deleted successfully")
-        return True
     else:
         logging.error(f"Failed to delete PVC: {result.stderr}")
-        return False
