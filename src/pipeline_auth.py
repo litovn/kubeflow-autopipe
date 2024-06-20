@@ -10,7 +10,6 @@ class KFPClientManager:
     """
     A class that creates `kfp.Client` instances with Dex authentication.
     """
-
     def __init__(
         self,
         api_url: str,
