@@ -64,5 +64,5 @@ def main(base_dir_path: str, template_path: str):
 if __name__ == '__main__':
     # Define paths
     base_dir_path = 'components'
-    template_path = 'src/dockerfile.template'
+    template_path = 'src/template/dockerfile.template'
     main(base_dir_path, template_path)
