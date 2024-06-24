@@ -1,5 +1,5 @@
 System:
   name: my_new_app
+  repository: 'https://github.com/litovn/kubeflow-components.git'
   components: ['ffmpeg-0', 'librosa', 'ffmpeg-1', 'ffmpeg-2', 'deepspeech', 'ffmpeg-3', 'object-detector']
   dependencies: [['ffmpeg-0', 'librosa', 1], ['librosa', 'ffmpeg-1', 1], ['ffmpeg-1', 'ffmpeg-2', 1], ['ffmpeg-2', 'deepspeech', 1], ['deepspeech', 'ffmpeg-3', 1], ['ffmpeg-3', 'object-detector', 1]]
-  parallelize_from: 'ffmpeg-1'
