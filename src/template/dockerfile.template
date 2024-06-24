@@ -1,20 +1,14 @@
-# Define parent image, bullseye for efficiency
+# Define parent image, alpine for efficiency
 FROM python:3.8-bullseye
 
 WORKDIR /usr/src/app
 
 # Install AI-SPRINT package and dependencies
-RUN apt-get update
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir numpy==1.23.0
-RUN pip install --no-cache-dir pandas
-RUN pip install --no-cache-dir PyYAML
-RUN pip install --no-cache-dir boto3
-
-RUN git clone https://gitlab.polimi.it/ai-sprint/ai-sprint-design.git \
+RUN pip install cookiecutter==2.1.1
+RUN apt-get update && apt-get install -y git \
+    && git clone https://gitlab.polimi.it/ai-sprint/ai-sprint-design.git \
     && cd ai-sprint-design \
-    && python3 -m pip install . \
-    && cd ..
+    && python3 -m pip install .
 
 # Install system packages
 COPY requirements.sys ./
@@ -26,8 +20,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Ensure clean state
 RUN apt-get clean \
-    && apt-get clean \
-    && rm -rf ai-sprint-design \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . .
