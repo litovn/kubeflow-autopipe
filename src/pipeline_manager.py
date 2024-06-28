@@ -17,30 +17,11 @@ def load_dag_configuration(dag_path):
     Load the dag configuration from the yaml file
 
     :param dag_path: path to the dag.yaml file
-    :return: dag configuration
+    :return: dag configuration components and dependencies information
     """
     with open(dag_path, 'r') as file:
-        return yaml.safe_load(file)
-
-
-def scan_dir(directory):
-    """
-    Search for all files in the given directory and remember its path
-
-    :param directory: directory to scan
-    :return: list of all the paths of files in the given directory
-    """
-    file_path = []
-
-    if not os.path.exists(directory):
-        logging.error(f"The directory {directory} does not exist.")
-
-    for file in os.listdir(directory):
-        full_path = os.path.join(directory, file)
-        if os.path.isfile(full_path):
-            file_path.append(full_path)
-
-    return file_path
+        data = yaml.safe_load(file)
+        return data['System']['dependencies']
 
 
 def setup_op(component_name, component_dir, base_mount, pvc_name):
@@ -54,7 +35,6 @@ def setup_op(component_name, component_dir, base_mount, pvc_name):
     :return: component_op
     """
     input_files = scan_dir(component_dir)
-    # TODO: da gestire anche output multipli
     input_file = input_files[0]
 
     output_dir = f"{base_mount}/{component_name}/"
@@ -65,35 +45,67 @@ def setup_op(component_name, component_dir, base_mount, pvc_name):
 
     return component_op
 
-
-def create_component(component_name: str, input_file: str, output_dir: str):
+'''
+def create_component(component_name: str):
     """
     Creation of a reusable container component for the various pipeline steps
 
     :param component_name: name of the component
-    :param input_file: input file
-    :param output_dir: output directory
     :return: the container component to be used in the pipeline
     """
     # Default kfp container component configuration
-    @dsl.container_component
-    def component_func(input_path: str = input_file, output_path: str = output_dir):
-        return dsl.ContainerSpec(
-            image=f'myapp/{component_name}:latest',
-            command=['sh', '-c'],
-            args=[
-                f'python main.py -i {input_path} -o {output_path}'
-            ]
-        )
-    component_func.__name__ = str(component_name)
-    return component_func
+    component_yaml = f"""
+kind: ComponentSpec
+metadata:
+  name: {component_name}
+implementation:
+  container:
+    image: myapp/{component_name}:latest
+    command:
+    - python
+    - main.py
+    args:
+    - --input_path
+    - '{{inputs.parameters.input_path}}'
+    - --output_path
+    - '{{outputs.parameters.output_path}}'
+inputs:
+  - {{name: input_path, type: String}}
+outputs:
+  - {{name: output_path, type: String}}
+        """
+    # Execute dynamically the component code
+    return load_component_from_text(component_yaml)
+''' # Non va bene, ritorna YamlComponent
+
+def create_component(component_name: str):
+    """
+    Creation of a reusable container component for the various pipeline steps
+
+    :param component_name: name of the component
+    :return: the container component to be used in the pipeline
+    """
+    # Default kfp container component configuration
+    component_code = f"""
+@dsl.container_component
+def {component_name}(input_path: str, output_path: str):
+    return dsl.ContainerSpec(
+        image=f'myapp/{component_name}:latest',
+        command=['sh', '-c'],
+        args=[
+            'python main.py -i ' + input_path + ' -o ' + output_path
+        ]
+    )
+    """
+    # Execute dynamically the component code
+    exec(component_code, globals())
 
 
-def generate_pipeline(dag: str, pvc_name: str, init_input_path: str):
+def generate_pipeline(dag_dependencies: list, pvc_name: str, init_input_path: str):
     """
     Generate the pipeline dynamically based on the DAG configuration
 
-    :param dag: DAG configuration
+    :param dag_dependencies: dependencies defined in the DAG config
     :param pvc_name: name of the pvc to use for the pipeline
     :param init_input_path: path to the initial input file
     :return: pipeline function
@@ -103,38 +115,46 @@ def generate_pipeline(dag: str, pvc_name: str, init_input_path: str):
         description="Automatically generated pipeline based on application_dag.yaml"
     )
     def dynamic_pipeline(init_path: str = init_input_path):
-        pipe = {}
         first_component = True
         base_mount = "/mnt/data"
+        component_ops = {}
 
-        for dependency in dag['System']['dependencies']:
+        for dependency in dag_dependencies:
             this_component, next_component, _ = dependency
 
+            # Define the first component
             if first_component:
-                init_output_dir = f"{base_mount}/{this_component}/"
-
-                component_op = create_component(this_component, init_path, init_output_dir)
-                component_op = mount_pvc(component_op, pvc_name=pvc_name, mount_path=init_output_dir)
+                output_dir = f"{base_mount}/{this_component}/"
+                component_op = create_component(this_component)
+                component_op = mount_pvc(component_op, pvc_name=pvc_name, mount_path=output_dir)
                 component_op.set_caching_options(False)
-
-                pipe[this_component] = component_op
-                prev_output_dir = init_output_dir
+                component_ops[this_component] = component_op
+                prev_component = this_component
                 first_component = False
-            else:
-                pipe[next_component] = setup_op(next_component, prev_output_dir, base_mount, pvc_name)
-                prev_output_dir = f"{base_mount}/{next_component}/"
+
+            # Ensure next_component is defined and properly linked
+            if next_component not in component_ops:
+                output_dir = f"{base_mount}/{next_component}/"
+                component_op = create_component(next_component)
+                component_op = mount_pvc(component_op, pvc_name=pvc_name, mount_path=output_dir)
+                component_op.set_caching_options(False)
+                component_ops[next_component] = component_op
+
+            # Link this component to the next component
+            component_ops[next_component].after(component_ops[prev_component])
+            prev_component = next_component
 
     return dynamic_pipeline
 
 
 if __name__ == '__main__':
     video_input_path = '/home/proai/PycharmProjects/kubeflow-autopipe/video/input_10sec.mp4'
-    dag_path = '/home/proai/PycharmProjects/kubeflow-autopipe/application_dag.yaml'
-    dag_config = load_dag_configuration(dag_path)
+    dag_path = "C:/Users/Nikil/PycharmProjects/kubeflow-autopipe/application_dag.yaml"
+    dag_dependencies = load_dag_configuration(dag_path)
 
     pvc_name = create_pvc()
 
-    pipeline_func = generate_pipeline(dag=dag_config, pvc_name=pvc_name, init_input_path=video_input_path)
+    pipeline_func = generate_pipeline(dag_dependencies=dag_dependencies, pvc_name=pvc_name, init_input_path=video_input_path)
     pipeline_filename = 'pipeline.yaml'
 
     pipeline_run(video_input_path, pvc_name, pipeline_func, pipeline_filename)
