@@ -3,13 +3,6 @@ FROM python:3.8-bullseye
 
 WORKDIR /usr/src/app
 
-# Install AI-SPRINT package and dependencies
-RUN pip install cookiecutter==2.1.1
-RUN apt-get update && apt-get install -y git \
-    && git clone https://gitlab.polimi.it/ai-sprint/ai-sprint-design.git \
-    && cd ai-sprint-design \
-    && python3 -m pip install .
-
 # Install system packages
 COPY requirements.sys ./
 RUN apt-get update && xargs -a requirements.sys apt-get install -y
@@ -18,8 +11,20 @@ RUN apt-get update && xargs -a requirements.sys apt-get install -y
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Set up the directory structure as used in the components
+RUN mkdir -p /usr/src/app/aisprint/onnx_inference \
+    && mkdir -p /usr/src/app/aisprint/annotations \
+    && mkdir -p /usr/src/app/aisprint/monitoring
+
+# Install AI-SPRINT annotation and load_and_inference packages
+RUN apt-get update && apt-get install -y wget \
+    && wget -O /usr/src/app/aisprint/onnx_inference/onnx_inference.py https://gitlab.polimi.it/ai-sprint/ai-sprint-studio/-/raw/master/src/aisprint/onnx_inference/onnx_inference.py \
+    && wget -O /usr/src/app/aisprint/annotations/annotations.py https://gitlab.polimi.it/ai-sprint/ai-sprint-studio/-/raw/master/src/aisprint/annotations/annotations.py \
+    && wget -O /usr/src/app/aisprint/monitoring/monitoring.py https://gitlab.polimi.it/ai-sprint/ai-sprint-studio/-/raw/master/src/aisprint/monitoring/monitoring.py
+
 # Ensure clean state
-RUN apt-get clean \
+RUN apt-get purge -y --auto-remove wget \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . .
