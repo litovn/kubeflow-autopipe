@@ -1,9 +1,0 @@
-@dsl.container_component
-    def COMPONENT_NAME(input_path: str, output_path: str):
-        return dsl.ContainerSpec(
-            image=f'myapp/{COMPONENT_NAME}:latest',
-            command=['sh', '-c'],
-            args=[
-                f'python main.py -i {input_path} -o {output_path}'
-            ]
-        )

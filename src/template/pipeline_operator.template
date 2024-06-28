@@ -1,5 +1,0 @@
-output_dir = f"/mnt/data/{COMPONENT_NAME}/"
-
-COMPONENT_NAME_op = create_component(COMPONENT_NAME, input_file, output_dir)
-COMPONENT_NAME_op = mount_pvc(COMPONENT_NAME_op, pvc_name=pvc_name, mount_path=output_dir)
-COMPONENT_NAME_op.set_caching_options(False)
