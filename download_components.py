@@ -5,7 +5,7 @@ import logging
 from git import Repo
 
 temp_dir = "./repo"
-components_dir = "./components"
+components_dir = "./component"
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] - %(message)s', datefmt='%H:%M:%S')
 
@@ -54,6 +54,8 @@ def check_copy_components(src_path: str, components_path: str, components: list)
         if component in repo_folders and os.path.isdir(os.path.join(src_path, component)):
             src = os.path.join(src_path, component)
             dest = os.path.join(components_path, component)
+            if os.path.exists(dest):
+                shutil.rmtree(dest)
             shutil.copytree(src, dest)
         else:
             missing_components.append(component)
