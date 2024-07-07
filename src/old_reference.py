@@ -121,7 +121,8 @@ def video_processing_pipeline(video_url: str, prefix: str, pvc_name: str, b_thre
     mask_op.set_caching_options(False)
 
     delete_op = DeletePVC(pvc_name=pvc_name).after(mask_op)
-	
+
+
 if __name__ == '__main__':
     kfp_client_manager = KFPClientManager(
         api_url="https://deploykf.example.com:8443/pipeline",

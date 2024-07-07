@@ -1,13 +1,11 @@
 import os
 import yaml
-import logging
 
-import kfp
 from kfp import dsl
-from kfp.kubernetes import mount_pvc
+from kfp.kubernetes import mount_pvc, DeletePVC
 
-from pvc_manager import *
-from pipeline_run import *
+from kube.pvc_manager import *
+from kube.pipeline_run import *
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] - %(message)s', datefmt='%H:%M:%S')
 
@@ -23,6 +21,20 @@ def load_dag_configuration(dag_path):
         data = yaml.safe_load(file)
         return data['System']['components'], data['System']['dependencies']
 
+
+# With download_from_pvc method defined in pvc_manager.py, it might be possible to search for the output file path
+# saved by the previous component (independently of its name) in the PVC and download it to the local machine, then
+# use it as the input for the next component.
+# This method is not used, because it would imply to create an updated pod after each component by overwriting the
+# previous one, which is not an optimal approach.
+"""
+def get_output_filepath(output_dir: str):
+    files = os.listdir(output_dir)
+    if not files:
+        logging.error(f"No files found in directory: {output_dir}")
+    file_path = os.path.join(output_dir, files[0])
+    return file_path
+"""
 
 def create_component(component_name: str):
     """
@@ -62,7 +74,7 @@ def setup_component(component_name: str, input_path: str, output_dir: str, pvc_n
     """
     comp_func = globals().get(component_name.replace('-', '_'))
     component_op = comp_func(input_path=input_path, output_path=output_dir)
-    component_op = mount_pvc(component_op, pvc_name=pvc_name, mount_path=output_dir)
+    component_op = mount_pvc(component_op, pvc_name=pvc_name, mount_path='/mnt/data')
     component_op.set_caching_options(False)
 
     return component_op
@@ -84,24 +96,27 @@ def generate_pipeline(dag_components: list, dag_dependencies: list, pvc_name: st
         name="Generated Pipeline from YAML",
         description="Automatically generated pipeline based on application_dag.yaml"
     )
-    def dynamic_pipeline(init_path: str = init_input_path):
+    def dynamic_pipeline(video_path: str = init_input_path, pvc_name: str = pvc_name):
         base_mount = "/mnt/data"
         component_op = {}
-
-        input_path = init_path
+        last_component = None
+        input_path = video_path
 
         for dependency in dag_dependencies:
             this_component, next_component, _ = dependency
 
             if this_component not in component_op:
-                output_dir_this = f"{base_mount}/{this_component}/"
+                output_dir_this = f"{base_mount}/{this_component}"
                 component_op[this_component] = setup_component(this_component, input_path, output_dir_this, pvc_name)
-                input_path = component_op[this_component].output
 
             if next_component not in component_op:
-                output_dir_next = f"{base_mount}/{next_component}/"
+                output_dir_next = f"{base_mount}/{next_component}"
+                input_path = f"{base_mount}/{this_component}.tar.gz"
                 component_op[next_component] = setup_component(next_component, input_path, output_dir_next, pvc_name)
                 component_op[next_component].after(component_op[this_component])
+                last_component = next_component
+
+        delete_op = DeletePVC(pvc_name=pvc_name).after(component_op[last_component])
 
     return dynamic_pipeline
 
@@ -119,6 +134,5 @@ if __name__ == '__main__':
     pipeline_run(video_input_path, pvc_name, pipeline_func, pipeline_filename)
 
     local_path = ' '
-    download_from_pvc(pvc_name, local_path)
-    delete_pvc(pvc_name)
-
+    # download_from_pvc(pvc_name, local_path)
+    # delete_pvc(pvc_name)

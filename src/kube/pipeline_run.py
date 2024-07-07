@@ -1,5 +1,6 @@
+import time
 import kfp
-from pipeline_auth import KFPClientManager
+from .pipeline_auth import KFPClientManager
 
 
 def pipeline_run(video_input_path, pvc_name, pipeline_func, pipeline_filename):
@@ -19,6 +20,7 @@ def pipeline_run(video_input_path, pvc_name, pipeline_func, pipeline_filename):
         dex_password="user1",
         dex_auth_type="local"
     )
+
     client = kfp_client_manager.create_kfp_client()
 
     # Compile the pipeline
@@ -29,7 +31,7 @@ def pipeline_run(video_input_path, pvc_name, pipeline_func, pipeline_filename):
     client.create_run_from_pipeline_package(
         pipeline_file=pipeline_filename,
         arguments={
-            'video_url': video_input_path,
+            'video_path': video_input_path,
             'pvc_name': pvc_name
         },
         run_name=run_name,

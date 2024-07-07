@@ -17,7 +17,7 @@ def create_pvc(storage_size: str = '5Gi'):
     :return: The unique name of the created PVC
     """
     unique_id = str(uuid.uuid4())
-    pvc_name = f"mypipe-pvc-{unique_id}"
+    pvc_name = f"pipe-pvc-{unique_id}"
     # Default yaml template to create a PVC
     pvc_yaml = f"""
 apiVersion: v1
@@ -41,7 +41,7 @@ spec:
             return None
 
     logging.info(f"PVC {pvc_name} created successfully")
-    return pvc_name
+    return str(pvc_name)
 
 
 def download_from_pvc(pvc_name: str, local_path: str):
