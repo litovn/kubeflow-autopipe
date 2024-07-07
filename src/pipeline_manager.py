@@ -1,5 +1,6 @@
 import os
 import yaml
+import logging
 
 from kfp import dsl
 from kfp.kubernetes import mount_pvc, DeletePVC
@@ -35,6 +36,7 @@ def get_output_filepath(output_dir: str):
     file_path = os.path.join(output_dir, files[0])
     return file_path
 """
+
 
 def create_component(component_name: str):
     """
