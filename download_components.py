@@ -5,7 +5,7 @@ import logging
 from git import Repo
 
 temp_dir = "./repo"
-components_dir = "./components"
+components_dir = "./component"
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] - %(message)s', datefmt='%H:%M:%S')
 
