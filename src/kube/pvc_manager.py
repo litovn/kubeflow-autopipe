@@ -34,13 +34,12 @@ spec:
   storageClassName: local-path
 """
     # Create the defined PVC to your local machine
-    with subprocess.Popen(["kubectl", "apply", "-f", "-"], stdin=subprocess.PIPE, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
-        stdout, stderr = process.communicate(input=pvc_yaml)
-        if process.returncode != 0:
-            logging.error(f"Failed to create PVC: {stderr}")
-            return None
-
-    logging.info(f"PVC {pvc_name} created successfully")
+    try:
+        result = subprocess.run(["kubectl", "apply", "-f", "-"], input=pvc_yaml, text=True, capture_output=True, check=True)
+        logging.info(f"PVC {pvc_name} created successfully")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Failed to create PVC: {e.stderr}")
+        return None
     return pvc_name
 
 
@@ -73,30 +72,19 @@ spec:
       claimName: {pvc_name}
 """
     # Create the defined Pod
-    with subprocess.Popen(["kubectl", "apply", "-f", "-"], stdin=subprocess.PIPE, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
-        stdout, stderr = process.communicate(input=pvc_yaml)
-        if process.returncode != 0:
-            logging.error(f"Failed to create Pod: {stderr}")
-            return
+    try:
+        subprocess.run(["kubectl", "apply", "-f", "-"], input=pvc_yaml, text=True, capture_output=True, check=True)
+        logging.info("Pod created successfully. Proceeding with file copy...")
+        time.sleep(10)
 
-    logging.info("Pod created successfully. Proceeding with file copy...")
-    time.sleep(10)
-
-    # Copy the contents from the PVC to a defined path
-    cp_command = ["kubectl", "cp", f"{NAMESPACE}/pvc-access-pod:/mnt/data", local_path]
-    cp_process = subprocess.run(cp_command, capture_output=True, text=True)
-    if cp_process.returncode == 0:
+        subprocess.run(["kubectl", "cp", f"{NAMESPACE}/pvc-access-pod:/mnt/data", local_path], capture_output=True, text=True, check=True)
         logging.info("Files copied successfully")
-    else:
-        logging.error(f"Error copying files: {cp_process.stderr}")
 
-    # Delete the defined Pod
-    rm_command = ["kubectl", "delete", "pod", "pvc-access-pod", "-n", NAMESPACE]
-    rm_process = subprocess.run(rm_command, capture_output=True, text=True)
-    if rm_process.returncode == 0:
+        subprocess.run(["kubectl", "delete", "pod", "pvc-access-pod", "-n", NAMESPACE], capture_output=True, text=True, check=True)
         logging.info("Temporary pod deleted successfully")
-    else:
-        logging.error(f"Error deleting pod 'pvc-access-pod': {rm_process.stderr}")
+
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Command failed: {e.stderr}")
 
 
 def delete_pvc(pvc_name: str):
@@ -106,11 +94,8 @@ def delete_pvc(pvc_name: str):
     :param pvc_name: The name of the PVC to delete
     :return: True if the PVC was deleted successfully, False otherwise
     """
-    # Delete the defined PVC
-    delete_command = ["kubectl", "delete", "pvc", pvc_name, "-n", NAMESPACE]
-    result = subprocess.run(delete_command, capture_output=True, text=True)
-
-    if result.returncode == 0:
+    try:
+        subprocess.run(["kubectl", "delete", "pvc", pvc_name, "-n", NAMESPACE], capture_output=True, text=True, check=True)
         logging.info(f"PVC {pvc_name} deleted successfully")
-    else:
-        logging.error(f"Failed to delete PVC: {result.stderr}")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Failed to delete PVC: {e.stderr}")
