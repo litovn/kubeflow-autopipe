@@ -18,6 +18,9 @@ RUN apt-get update && xargs -a requirements.sys apt-get install -y
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN pip install numpy
+RUN pip install pandas
+
 # Ensure clean state
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
