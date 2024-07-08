@@ -29,7 +29,7 @@ def pipeline_run(video_input_path, pvc_name, pipeline_func, pipeline_filename):
     client.create_run_from_pipeline_package(
         pipeline_file=pipeline_filename,
         arguments={
-            'video_url': video_input_path,
+            'video_path': video_input_path,
             'pvc_name': pvc_name
         },
         run_name=run_name,
