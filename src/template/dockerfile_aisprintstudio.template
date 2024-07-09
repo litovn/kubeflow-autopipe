@@ -1,4 +1,4 @@
-# Define parent image, alpine for efficiency
+# Define parent image, bullseye for efficiency
 FROM python:3.8-bullseye
 
 WORKDIR /usr/src/app
@@ -17,7 +17,6 @@ RUN apt-get update && xargs -a requirements.sys apt-get install -y
 # Install python packages
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-
 RUN pip install numpy
 RUN pip install pandas
 

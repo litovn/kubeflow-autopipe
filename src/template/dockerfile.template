@@ -1,4 +1,4 @@
-# Define parent image, alpine for efficiency
+# Define parent image, bullseye for efficiency
 FROM python:3.8-bullseye
 
 WORKDIR /usr/src/app
@@ -10,17 +10,23 @@ RUN apt-get update && xargs -a requirements.sys apt-get install -y
 # Install python packages
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install numpy
+RUN pip install pandas
 
 # Set up the directory structure as used in the components
-RUN mkdir -p /usr/src/app/aisprint/onnx_inference \
-    && mkdir -p /usr/src/app/aisprint/annotations \
-    && mkdir -p /usr/src/app/aisprint/monitoring
+RUN mkdir -p aisprint/onnx_inference \
+    && mkdir -p aisprint/annotations \
+    && mkdir -p aisprint/monitoring
 
-# Install AI-SPRINT annotation and load_and_inference packages
+# Install AI-SPRINT needed packages for components
 RUN apt-get update && apt-get install -y wget \
-    && wget -O /usr/src/app/aisprint/onnx_inference/onnx_inference.py https://gitlab.polimi.it/ai-sprint/ai-sprint-studio/-/raw/master/src/aisprint/onnx_inference/onnx_inference.py \
-    && wget -O /usr/src/app/aisprint/annotations/annotations.py https://gitlab.polimi.it/ai-sprint/ai-sprint-studio/-/raw/master/src/aisprint/annotations/annotations.py \
-    && wget -O /usr/src/app/aisprint/monitoring/monitoring.py https://gitlab.polimi.it/ai-sprint/ai-sprint-studio/-/raw/master/src/aisprint/monitoring/monitoring.py
+    && wget -O aisprint/onnx_inference/onnx_inference.py https://gitlab.polimi.it/ai-sprint/ai-sprint-studio/-/raw/master/src/aisprint/onnx_inference/onnx_inference.py \
+    && wget -O aisprint/onnx_inference/__init__.py https://gitlab.polimi.it/ai-sprint/ai-sprint-studio/-/raw/master/src/aisprint/onnx_inference/__init__.py \
+    && wget -O aisprint/annotations/annotations.py https://gitlab.polimi.it/ai-sprint/ai-sprint-studio/-/raw/master/src/aisprint/annotations/annotations.py \
+    && wget -O aisprint/annotations/annotations_parser.py https://gitlab.polimi.it/ai-sprint/ai-sprint-studio/-/raw/master/src/aisprint/annotations/annotations_parser.py\
+    && wget -O aisprint/annotations/__init__.py https://gitlab.polimi.it/ai-sprint/ai-sprint-studio/-/raw/master/src/aisprint/annotations/__init__.py \
+    && wget -O aisprint/monitoring/monitoring.py https://gitlab.polimi.it/ai-sprint/ai-sprint-studio/-/raw/master/src/aisprint/monitoring/monitoring.py \
+    && wget -O aisprint/monitoring/__init__.py https://gitlab.polimi.it/ai-sprint/ai-sprint-studio/-/raw/master/src/aisprint/monitoring/__init__.py
 
 # Ensure clean state
 RUN apt-get purge -y --auto-remove wget \
