@@ -2,11 +2,10 @@ import kfp
 from .pipeline_auth import KFPClientManager
 
 
-def pipeline_run(video_input_path, pvc_name, pipeline_func, pipeline_filename):
+def pipeline_run(pvc_name, pipeline_func, pipeline_filename):
     """
     Generate a run to execute the defined pipeline
 
-    :param video_input_path: path to video file to process
     :param pvc_name: name of the pvc to store data into
     :param pipeline_func: pipeline function to execute
     :param pipeline_filename: name of pipeline yaml config file
@@ -21,17 +20,24 @@ def pipeline_run(video_input_path, pvc_name, pipeline_func, pipeline_filename):
     )
     client = kfp_client_manager.create_kfp_client()
 
-    # Compile the pipeline
+    # Set namespace in the Kubernetes cluster
+    client.set_user_namespace('team-1')
+
+    # Compile the pipeline into a package
     kfp.compiler.Compiler().compile(pipeline_func=pipeline_func, package_path=pipeline_filename)
 
     # Run the experiment
     run_name = f"Pipeline run for {pvc_name}"
-    client.create_run_from_pipeline_package(
+    run = client.create_run_from_pipeline_package(
         pipeline_file=pipeline_filename,
         arguments={
-            'video_path': video_input_path,
             'pvc_name': pvc_name
         },
         run_name=run_name,
-        namespace='team-1'
+        experiment_name='auto_kubepipe',
+        namespace='team-1',
+        enable_caching=False
     )
+
+    client.wait_for_run_completion(run_id=run.id, timeout=3600)
+
