@@ -1,4 +1,6 @@
 import os
+import time
+
 import yaml
 import subprocess
 import logging
@@ -106,7 +108,6 @@ def generate_pipeline(username: str, dag_components: list, dag_dependencies: lis
     def dynamic_pipeline(pvc_name: str):
         base_mount = "/mnt/data"
         component_op = {}
-        last_component = None
         input_path = init_input
 
         # Set up the save_video component as first component
@@ -128,9 +129,6 @@ def generate_pipeline(username: str, dag_components: list, dag_dependencies: lis
                 input_path = f"{base_mount}/{this_component}.tar.gz"
                 component_op[next_component] = setup_component(next_component, input_path, output_dir_next, pvc_name)
                 component_op[next_component].after(component_op[this_component])
-                last_component = next_component
-
-        delete_op = DeletePVC(pvc_name=pvc_name).after(component_op[last_component])
 
     return dynamic_pipeline
 
@@ -151,6 +149,9 @@ if __name__ == '__main__':
     pipeline_filename = 'pipeline.yaml'
 
     pipeline_run(pvc_name, pipeline_func, pipeline_filename)
+    time.sleep(5)
 
-    local_path = ' '
+    local_path = '/home/proai/PycharmProjects/kubeflow-autopipe/output'
     download_from_pvc(pvc_name, local_path)
+
+    delete_pvc(pvc_name)
