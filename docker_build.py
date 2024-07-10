@@ -1,6 +1,7 @@
 import os
 import yaml
 import subprocess
+import argparse
 import logging
 from dotenv import load_dotenv
 
@@ -106,10 +107,15 @@ def push_to_hub(username, component):
         logging.error(f"Failed to push {component} to Docker Hub: {result.stderr}")
 
 
-def main(base_dir_path: str, template_path: str):
-    logging.info("Welcome to the Docker image generator, application starting...\n")
+def main(base_dir_path: str, template_path: str, input_file: str):
+    """
+    Main function to build and push Docker images for the components
+
+    :param base_dir_path: Base directory path where component directories are located
+    :param template_path: path to the Dockerfile template
+    """
     # Load the components from the dag configuration file
-    components = load_dag_configuration('application_dag.yaml')
+    components = load_dag_configuration(input_file)
 
     # Read credentials from .env file
     load_dotenv()
@@ -137,4 +143,9 @@ def main(base_dir_path: str, template_path: str):
 if __name__ == '__main__':
     base_dir_path = 'components'
     template_path = 'src/template/dockerfile.template'
-    main(base_dir_path, template_path)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input", required=True, help="path to application_dag.yaml configuration file")
+    args = vars(parser.parse_args())
+
+    main(base_dir_path, template_path, args['input'])

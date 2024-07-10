@@ -1,13 +1,14 @@
 import os
 import shutil
 import yaml
+import argparse
 import logging
 from git import Repo
 
 # Temporary directory for cloning the repository
 temp_dir = "./repo"
 # Directory name where components will be stored
-components_dir = "./component"
+components_dir = "./components"
 # Configure logging to display information based on your needs
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] - %(message)s', datefmt='%H:%M:%S')
 
@@ -78,9 +79,21 @@ def clean_up(path: str):
         shutil.rmtree(path)
 
 
-if __name__ == "__main__":
-    config_file_path = 'application_dag.yaml'
-    repo_url, components = load_dag_configuration(config_file_path)
+def main(input_file):
+    """
+    Run the download components script
+
+    :param input_file: Path to the application_dag.yaml configuration file
+    """
+    repo_url, components = load_dag_configuration(input_file)
     clone_repository(repo_url, temp_dir)
     check_copy_components(temp_dir, components_dir, components)
     clean_up(temp_dir)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input", required=True, help="path to application_dag.yaml configuration file")
+    args = vars(parser.parse_args())
+
+    main(args['input'])

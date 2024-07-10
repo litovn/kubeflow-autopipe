@@ -3,6 +3,7 @@ import time
 import yaml
 import subprocess
 import logging
+import argparse
 from dotenv import load_dotenv
 
 from kfp import dsl
@@ -10,6 +11,7 @@ from kfp.kubernetes import mount_pvc
 
 from kube.pvc_manager import *
 from kube.pipeline_run import *
+
 
 # Configure logging to display information based on your needs
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] - %(message)s', datefmt='%H:%M:%S')
@@ -138,13 +140,11 @@ def generate_pipeline(username: str, dag_components: list, dag_dependencies: lis
     return dynamic_pipeline
 
 
-if __name__ == '__main__':
-    # Define path to the configuration file
-    dag_path = ' '
+def main(input_file: str):
     # Define the local path to store the outputs saved into the pvc
-    local_path = '/home/proai/PycharmProjects/kubeflow-autopipe/output'
+    local_path = 'output'
     # Save need data from the configuration file
-    dag_components, dag_dependencies, media = load_dag_configuration(dag_path)
+    dag_components, dag_dependencies, media = load_dag_configuration(input_file)
 
     # Save docker_username defined in the .env file
     load_dotenv()
@@ -167,3 +167,11 @@ if __name__ == '__main__':
     download_from_pvc(pvc_name, local_path)
     # Delete the PVC after the pipeline execution
     delete_pvc(pvc_name)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input", required=True, help="path to application_dag.yaml configuration file")
+    args = vars(parser.parse_args())
+
+    main(args['input'])
