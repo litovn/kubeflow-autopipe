@@ -1,16 +1,20 @@
 import kfp
 from .pipeline_auth import KFPClientManager
 
+# Namespace defined and used with deployKF
+NAMESPACE = 'team-1'
+
 
 def pipeline_run(pvc_name, pipeline_func, pipeline_filename):
     """
-    Generate a run to execute the defined pipeline
+    Initiates a Kubeflow pipeline run using a specified pipeline function and configuration.
 
-    :param pvc_name: name of the pvc to store data into
-    :param pipeline_func: pipeline function to execute
-    :param pipeline_filename: name of pipeline yaml config file
+    :param pvc_name: The name of the PVC to store component outputs into
+    :param pipeline_func: Kubeflow Pipeline function to execute
+    :param pipeline_filename: Name of Kubeflow Pipeline YAML configuration file
     """
-    # Create a request to connect to the Kubeflow framework by DeployKF, using your credentials
+    # Create a Kubeflow Pipelines client using the KFPClientManager, which handles authentication and connection
+    # details to the Kubeflow Pipelines API.
     kfp_client_manager = KFPClientManager(
         api_url="https://deploykf.example.com:8443/pipeline",
         skip_tls_verify=True,
@@ -20,13 +24,13 @@ def pipeline_run(pvc_name, pipeline_func, pipeline_filename):
     )
     client = kfp_client_manager.create_kfp_client()
 
-    # Set namespace in the Kubernetes cluster
-    client.set_user_namespace('team-1')
+    # Set Kubernetes namespace for the pipeline run
+    client.set_user_namespace(NAMESPACE)
 
-    # Compile the pipeline into a package
+    # Compile the provided pipeline function into a YAML configuration file, saving it with the specified filename
     kfp.compiler.Compiler().compile(pipeline_func=pipeline_func, package_path=pipeline_filename)
 
-    # Run the experiment
+    # Submit the pipeline run to the Kubeflow Pipelines environment
     run_name = f"Pipeline run for {pvc_name}"
     run = client.create_run_from_pipeline_package(
         pipeline_file=pipeline_filename,
@@ -35,9 +39,11 @@ def pipeline_run(pvc_name, pipeline_func, pipeline_filename):
         },
         run_name=run_name,
         experiment_name='auto_kubepipe',
-        namespace='team-1',
+        namespace=NAMESPACE,
         enable_caching=False
     )
+
+    # Waits for the pipeline run to complete
     run_id = str(run.run_id)
     client.wait_for_run_completion(run_id=run_id, timeout=3600, sleep_duration=10)
 

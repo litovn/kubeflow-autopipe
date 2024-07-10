@@ -4,18 +4,20 @@ import yaml
 import logging
 from git import Repo
 
+# Temporary directory for cloning the repository
 temp_dir = "./repo"
+# Directory name where components will be stored
 components_dir = "./component"
-
+# Configure logging to display information based on your needs
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] - %(message)s', datefmt='%H:%M:%S')
 
 
 def load_dag_configuration(dag_path: str):
     """
-    Load the dag configuration from the yaml file
+    Load the yaml dag configuration file, to extract the required information
 
-    :param dag_path: path to the dag.yaml file
-    :return: dag configuration repository and components information
+    :param dag_path: The file path to the YAML configuration file
+    :return: A tuple containing the repository URL and a list of component names
     """
     with open(dag_path, 'r') as file:
         data = yaml.safe_load(file)
@@ -24,10 +26,10 @@ def load_dag_configuration(dag_path: str):
 
 def clone_repository(repo_url: str, local_path: str):
     """
-    Clone repository to a local path. If folder already exists, overwrite it
+    Clone a Git repository to a defined local path. If folder already exists, delete it to ensure a fresh clone of the repository
 
-    :param repo_url: URL of the repository to clone
-    :param local_path: path to clone the repository into
+    :param repo_url: URL of the Git repository to clone
+    :param local_path: The defined local path where the repository should be cloned
     """
     if os.path.exists(local_path):
         shutil.rmtree(local_path)
@@ -36,11 +38,12 @@ def clone_repository(repo_url: str, local_path: str):
 
 def check_copy_components(src_path: str, components_path: str, components: list):
     """
-    Checks for the components in the repo and copy to a 'components' folder
+    Check for specified components within a cloned repository and copy them to the defined 'components' directory.
+    If a component does not exist in the repository, it is noted in a list of missing components.
 
-    :param src_path: path to the source repository
-    :param components_path: path to the local components folder
-    :param components: list of components names
+    :param src_path: The path to the cloned source Git repository
+    :param components_path: The path to the directory where components should be copied
+    :param components: List of component names to check for and copy
     """
     if not os.path.exists(components_path):
         os.makedirs(components_path)
@@ -48,8 +51,6 @@ def check_copy_components(src_path: str, components_path: str, components: list)
     repo_folders = os.listdir(src_path)
     missing_components = []
 
-    # Check if the component defined in the dag exists in the repository as directory name
-    # and copy it to the components folder else add it to the missing components list
     for component in components:
         if component in repo_folders and os.path.isdir(os.path.join(src_path, component)):
             src = os.path.join(src_path, component)
@@ -68,9 +69,10 @@ def check_copy_components(src_path: str, components_path: str, components: list)
 
 def clean_up(path: str):
     """
-    Removes the specified directory and all its contents
+    Remove a specified directory and all of its contents.
+    Used to clean-up temporary directories or cloned repositories, after their contents have been processed.
 
-    :param path: path to the directory to delete
+    :param path: The path to the directory to delete
     """
     if os.path.exists(path):
         shutil.rmtree(path)

@@ -4,12 +4,14 @@ import subprocess
 import logging
 from dotenv import load_dotenv
 
+# Configure logging to display information based on your needs
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] - %(message)s', datefmt='%H:%M:%S')
 
 
 def docker_login(username, password):
     """
-    Login to Docker registry
+    Login to Docker registry using provided credentials.
+    This function constructs a Docker login command using the provided username and password, then executes it.
 
     :param username: Docker username
     :param password: Docker password
@@ -24,7 +26,7 @@ def docker_login(username, password):
 
 def cleanup_untagged_images():
     """
-    Removes untagged Docker images from local machine
+    Removes untagged Docker images from local machine, to help free space.
     """
     remove_command = ["docker", "image", "prune", "-f"]
     result = subprocess.run(remove_command, capture_output=True, text=True)
@@ -36,12 +38,12 @@ def cleanup_untagged_images():
 
 def generate_dockerfile(component, template_path, base_dir_path):
     """
-    Generate Dockerfile for a given component, using the dockerfile.template
+    Generate Dockerfile for a given component, using a specified template.
 
-    :param component: component name to generate dockerfile for
-    :param template_path: path to the dockerfile.template
-    :param base_dir_path: base path where component directories are located
-    :return: path to the component directory
+    :param component: Component name to generate Dockerfile for
+    :param template_path: path to the Dockerfile template
+    :param base_dir_path: Base directory path where component directories are located
+    :return: Path to the directory of the component
     """
     # Create the needed paths for the component
     component_path = os.path.join(base_dir_path, component)
@@ -63,9 +65,9 @@ def build_docker_image(username, component, component_path):
     """
     Build Docker image for a given component
 
-    :param username: Docker username
-    :param component: component name
-    :param component_path: path to the component directory
+    :param username: Docker username used for tagging the image
+    :param component: Name of the component for which to build the image
+    :param component_path: Path to the directory of the component
     """
     tag = f"{username}/{component}:latest"
     build_command = ["docker", "build", "-t", tag, "."]
@@ -78,10 +80,10 @@ def build_docker_image(username, component, component_path):
 
 def push_to_hub(username, component):
     """
-    Push Docker image to Docker Hub
+    Push Docker image of the given component to Docker Hub
 
-    :param username: Docker username
-    :param component: component name
+    :param username: Docker username used for tagging the image
+    :param component: Name of the component for which to build the image
     """
     tag = f"{username}/{component}:latest"
     push_command = ["docker", "push", tag]
@@ -122,7 +124,6 @@ def main(base_dir_path: str, template_path: str):
 
 
 if __name__ == '__main__':
-    # Define paths
     base_dir_path = 'components'
     template_path = 'src/template/dockerfile.template'
     main(base_dir_path, template_path)

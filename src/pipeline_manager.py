@@ -1,26 +1,26 @@
 import os
 import time
-
 import yaml
 import subprocess
 import logging
 from dotenv import load_dotenv
+
 from kfp import dsl
-from kfp.kubernetes import mount_pvc, DeletePVC
+from kfp.kubernetes import mount_pvc
 
 from kube.pvc_manager import *
 from kube.pipeline_run import *
 
-
+# Configure logging to display information based on your needs
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] - %(message)s', datefmt='%H:%M:%S')
 
 
 def load_dag_configuration(dag_path):
     """
-    Load the dag configuration from the yaml file
+    Load the yaml dag configuration file, to extract the required information
 
-    :param dag_path: path to the dag.yaml file
-    :return: dag configuration components and dependencies information
+    :param dag_path: The file path to the YAML configuration file
+    :return: A tuple containing lists of components, dependencies, and the initial input media file path
     """
     with open(dag_path, 'r') as file:
         data = yaml.safe_load(file)
@@ -30,8 +30,12 @@ def load_dag_configuration(dag_path):
 # With download_from_pvc method defined in pvc_manager.py, it might be possible to search for the output file path
 # saved by the previous component (independently of its name) in the PVC and download it to the local machine, then
 # use it as the input for the next component.
+# -----
 # This method is not used, because it would imply to create an updated pod after each component by overwriting the
 # previous one, which is not an optimal approach.
+# -----
+# instead we consider that the component will save their output file as: output_name + ".tar.gz"
+# where output_name = os.path.basename(output_path_dir)
 """
 def get_output_filepath(output_dir: str):
     files = os.listdir(output_dir)
@@ -44,14 +48,14 @@ def get_output_filepath(output_dir: str):
 
 def create_component(username: str, component_name: str):
     """
-    Creation of a reusable container component for the various pipeline steps
+    Dynamically create a reusable container component for the Kubeflow Pipeline steps
 
-    :param component_name: name of the component
-    :return: the container component to be used in the pipeline
+    :param username: Docker username to prefix to the Docker image name
+    :param component_name: Name of the component, used to generate the function name and specify the Docker image
     """
     comp_name = component_name.replace('-', '_')
 
-    # Default kfp container component configuration
+    # Default kfp.container_component configuration
     component_code = f"""
 @dsl.container_component
 def {comp_name}(input_path: str, output_path: str):
@@ -63,47 +67,48 @@ def {comp_name}(input_path: str, output_path: str):
         ]
     )
     """
-    # To execute dynamically the component
+    # Execute the generated code to define the component function dynamically
     exec(component_code, globals())
 
 
 def setup_component(component_name: str, input_path: str, output_dir: str, pvc_name: str):
     """
-    Setup the component for the pipeline with various configurations.
+    Set up a component for the pipeline with various configurations (including input and output paths, and PVC mounting),
+    by retrieving the dynamically created component function.
     If needed, the method can be extended to include more configurations based on the Kubeflow pipeline requirements.
 
-    :param name: name of the component to be in the pipeline
-    :param input_path: path to the input file for the component
-    :param output_dir: output directory for the component
-    :param pvc_name: name of the pvc to be mounted
-    :return: component_op
+    :param name: Name of the component to be included in the pipeline
+    :param input_path: Path to the input file for the component
+    :param output_dir: Output directory for the component's results
+    :param pvc_name: Name of the Persistent Volume Claim (PVC) to be mounted
+    :return: Configured component operation for the pipeline
     """
     comp_func = globals().get(component_name.replace('-', '_'))
     component_op = comp_func(input_path=input_path, output_path=output_dir)
     component_op = mount_pvc(component_op, pvc_name=pvc_name, mount_path='/mnt/data')
-    # Caching OFF specified in the pipeline run, but can be set to True if needed for a specific component
+    # Caching can be enabled or disabled here for a specific component, if needed.
     # component_op.set_caching_options(False)
-
     return component_op
 
 
 def generate_pipeline(username: str, dag_components: list, dag_dependencies: list, init_input: str):
     """
-    Create the components function, then generate the pipeline dynamically based on the DAG configuration
+    Dynamically generate a Kubeflow Pipeline based on the DAG configuration. This involves creating container
+    components for each step in the pipeline and setting up their execution order based on dependencies.
 
-    :param dag_components: components defined in the DAG config
-    :param dag_dependencies: dependencies defined in the DAG config
-    :param init_input: name of the initial input file
-    :return: pipeline function
+    :param username: Docker username for Docker image naming
+    :param dag_components: List of components defined in the DAG configuration file
+    :param dag_dependencies: List of dependencies defined in the DAG configuration file
+    :param init_input: Name of the initial input media file path
+    :return: The Kubeflow Pipeline function
     """
-
     for component in dag_components:
         create_component(username, component)
     create_component(username, 'save-video')
 
     @dsl.pipeline(
-        name="Generated Pipeline from YAML",
-        description="Automatically generated pipeline based on application_dag.yaml"
+        name="Kubeflow Autopipe",
+        description="Automatically generated pipeline based on the provided configuration file"
     )
     def dynamic_pipeline(pvc_name: str):
         base_mount = "/mnt/data"
@@ -134,24 +139,31 @@ def generate_pipeline(username: str, dag_components: list, dag_dependencies: lis
 
 
 if __name__ == '__main__':
+    # Define path to the configuration file
     dag_path = ' '
-
+    # Define the local path to store the outputs saved into the pvc
+    local_path = '/home/proai/PycharmProjects/kubeflow-autopipe/output'
+    # Save need data from the configuration file
     dag_components, dag_dependencies, media = load_dag_configuration(dag_path)
 
+    # Save docker_username defined in the .env file
     load_dotenv()
     docker_username = os.getenv('DOCKER_USERNAME')
 
+    # Create the PVC for the pipeline
     pvc_name = create_pvc()
 
+    # Save the name of the file to be used as input for the pipeline
     input_filename = os.path.basename(media)
 
+    # Generate the pipeline function
     pipeline_func = generate_pipeline(username=docker_username, dag_components=dag_components, dag_dependencies=dag_dependencies, init_input=input_filename)
     pipeline_filename = 'pipeline.yaml'
-
+    # Execute the pipeline
     pipeline_run(pvc_name, pipeline_func, pipeline_filename)
     time.sleep(5)
 
-    local_path = '/home/proai/PycharmProjects/kubeflow-autopipe/output'
+    # Download the output file from the PVC to the local machine
     download_from_pvc(pvc_name, local_path)
-
+    # Delete the PVC after the pipeline execution
     delete_pvc(pvc_name)

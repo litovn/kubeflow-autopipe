@@ -3,22 +3,25 @@ import time
 import subprocess
 import logging
 
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s] - %(message)s', datefmt='%H:%M:%S')
-
+# Namespace defined and used with deployKF
 NAMESPACE = 'team-1'
+# Configure logging to display information based on your needs
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] - %(message)s', datefmt='%H:%M:%S')
 
 
 def create_pvc(storage_size: str = '5Gi'):
     """
-    Creates a Kubernetes PersistentVolumeClaim with a unique UUID to ensure it does not collide with existing PVC names
-    The PVC is configured with the specifications used by DeployKF
+    Creates a Kubernetes PersistentVolumeClaim (PVC) with a unique name, using a UUID to avoid name collisions.
+    The PVC is created with a specified storage size and is intended for use within a specific Kubernetes namespace.
+    This function allocates storage dynamically for applications running in Kubernetes, ensuring that each run of the
+    application has its own dedicated storage resources.
 
-    :param storage_size: Storage size for the PVC, defaults to '5Gi'
+    :param storage_size: Storage capacity for the PVC, defaults to '5Gi'
     :return: The unique name of the created PVC
     """
     unique_id = str(uuid.uuid4())
     pvc_name = f"mypipe-pvc-{unique_id}"
-    # Default yaml template to create a PVC
+    # Default YAML template for creating a PVC
     pvc_yaml = f"""
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -33,9 +36,8 @@ spec:
       storage: {storage_size}
   storageClassName: local-path
 """
-    # Create the defined PVC to your local machine
     try:
-        result = subprocess.run(["kubectl", "apply", "-f", "-"], input=pvc_yaml, text=True, capture_output=True, check=True)
+        subprocess.run(["kubectl", "apply", "-f", "-"], input=pvc_yaml, text=True, capture_output=True, check=True)
         logging.info(f"PVC {pvc_name} created successfully")
     except subprocess.CalledProcessError as e:
         logging.error(f"Failed to create PVC: {e.stderr}")
@@ -45,13 +47,14 @@ spec:
 
 def download_from_pvc(pvc_name: str, local_path: str):
     """
-    Creates a Kubernetes temporary Pod to access the PVC where the files from the pipeline run are stored and download
-    to a given local path
+    Downloads files from a specified PersistentVolumeClaim (PVC) to a local directory.
+    Achieved by creating a temporary Kubernetes Pod that mounts the PVC and then copying the files from the PVC to the
+    local provided path.
 
     :param pvc_name: The name of the PVC to download content from
     :param local_path: The local path where you want to store the downloaded file
     """
-    # yaml definition to create a Pod with the desired PVC attached to it
+    # YAML definition to create a Pod with the desired PVC attached to it
     pvc_yaml = f"""
 apiVersion: v1
 kind: Pod
@@ -71,7 +74,6 @@ spec:
     persistentVolumeClaim:
       claimName: {pvc_name}
 """
-    # Create the defined Pod
     try:
         subprocess.run(["kubectl", "apply", "-f", "-"], input=pvc_yaml, text=True, capture_output=True, check=True)
         time.sleep(10)
@@ -91,10 +93,9 @@ spec:
 
 def delete_pvc(pvc_name: str):
     """
-    Deletes a specified Kubernetes PersistentVolumeClaim
+    Deletes a specified Kubernetes PersistentVolumeClaim (PVC)
 
     :param pvc_name: The name of the PVC to delete
-    :return: True if the PVC was deleted successfully, False otherwise
     """
     try:
         subprocess.run(["kubectl", "delete", "pvc", pvc_name, "-n", NAMESPACE, "--grace-period=0", "--force"], capture_output=True, text=True, check=True)
