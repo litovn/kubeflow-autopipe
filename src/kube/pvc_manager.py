@@ -74,13 +74,15 @@ spec:
     # Create the defined Pod
     try:
         subprocess.run(["kubectl", "apply", "-f", "-"], input=pvc_yaml, text=True, capture_output=True, check=True)
-        logging.info("Pod created successfully. Proceeding with file copy...")
         time.sleep(10)
+        logging.info("Pod created successfully. Proceeding with file copy...")
 
         subprocess.run(["kubectl", "cp", f"{NAMESPACE}/pvc-access-pod:/mnt/data", local_path], capture_output=True, text=True, check=True)
+        time.sleep(5)
         logging.info("Files copied successfully")
 
         subprocess.run(["kubectl", "delete", "pod", "pvc-access-pod", "-n", NAMESPACE], capture_output=True, text=True, check=True)
+        time.sleep(10)
         logging.info("Temporary pod deleted successfully")
 
     except subprocess.CalledProcessError as e:
@@ -95,7 +97,7 @@ def delete_pvc(pvc_name: str):
     :return: True if the PVC was deleted successfully, False otherwise
     """
     try:
-        subprocess.run(["kubectl", "delete", "pvc", pvc_name, "-n", NAMESPACE], capture_output=True, text=True, check=True)
+        subprocess.run(["kubectl", "delete", "pvc", pvc_name, "-n", NAMESPACE, "--grace-period=0", "--force"], capture_output=True, text=True, check=True)
         logging.info(f"PVC {pvc_name} deleted successfully")
     except subprocess.CalledProcessError as e:
         logging.error(f"Failed to delete PVC: {e.stderr}")
