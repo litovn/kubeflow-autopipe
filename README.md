@@ -40,6 +40,7 @@ Resource | Minimum Requirement
 CPU Cores | `4`
 RAM | `16 GB`
 Storage | `64 GB`
+
 You will need to install the following dependencies:
 - Docker Engine
 - [`requirements.txt`](requirements.txt) packages
