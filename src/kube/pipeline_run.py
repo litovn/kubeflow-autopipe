@@ -38,6 +38,6 @@ def pipeline_run(pvc_name, pipeline_func, pipeline_filename):
         namespace='team-1',
         enable_caching=False
     )
-
-    client.wait_for_run_completion(run_id=run.id, timeout=3600)
+    run_id = str(run.run_id)
+    client.wait_for_run_completion(run_id=run_id, timeout=3600, sleep_duration=10)
 
