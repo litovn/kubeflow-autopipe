@@ -6,12 +6,12 @@
 ## Sections
 - [About](#about)
 - [Requirements](#requirements)
-- [Features](#features)
 - [Execution Order](#execution-order)
 - [Configuration](#configuration)
 - [Getting Started](#getting-started)
     - [deployKF](#i-setup-deploykf)
     - [Kubeflow Autopipe](#ii-setup-kubeflow-autopipe)
+- [Features](#features)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
 
@@ -41,26 +41,15 @@ CPU Cores | `4`
 RAM | `16 GB`
 Storage | `64 GB`
 
+
 You will need to install the following dependencies:
 - Docker Engine
 - [`requirements.txt`](requirements.txt) packages
 - deployKF dependencies
 
 
-## Features
-- **Automated Video Processing Pipeline**: Simplifies the process of video processing by automating the workflow through a predefined sequence of components.
-- **Modular Component System**: Utilizes a series of components defined by the user.
-- **Flexible Workflow Configuration**: Allows for easy customization of the pipeline through the `application_dag.yaml` configuration file, enabling users to define their own sequence of components and dependencies.
-- **Docker Image Building**: Automatically builds Docker images for each component in the pipeline, ensuring that the components are containerized and ready for execution. Docker Hub registry synchronization is also supported.
-- **Kubeflow Pipeline Execution**: Executes the pipeline in the Kubeflow environment, orchestrating the sequence of components and managing the workflow.
-- **Persistent Volume Container (PVC) Support**: Utilizes PVCs to store input media and output files, ensuring data persistence and efficient data management.
-- **Dex Static Credentials**: Supports the use of static credentials from both inside and outside the cluster without needing user interaction during authentication with the Dex identity provider, ensuring secure access to the Kubeflow environment.
-- **Large File Support**: Integrates with Git LFS to handle large files such as ONNX models, PBMM files, and scorer files, ensuring efficient management and versioning of large assets.
-
-
-
 ## Execution Order
-By running the `autopipe.py` script in the main folder, the pipeline will be executed in the following order:
+By running the [`autopipe.py`](autopipe.py) script in the main folder, the pipeline will be executed in the following order:
 1. [`save_video`](src/save-video/main.py) to copy the media file to be used as input to the pipeline, from the defined local path into the `save-video` folder that will be containerized and used as the first component to save the video into a Persistent Volume Container (PVC) when the pipeline will be executed. 
 <br /><br />
 2. [`download_components`](download_components.py) to download the components from the defined Git repository in the config file, into the `components` folder.
@@ -87,7 +76,7 @@ By running the `autopipe.py` script in the main folder, the pipeline will be exe
  
 
 ## Configuration
-The pipeline's behavior is configured through the `application_dag.yaml` file. This YAML file defines the system's name, the Git repository where the component are located, the local path of the media to be used as input in the pipeline, the components name involved in the processing, and the dependencies between these components.
+The pipeline's behavior is configured through the [`application_dag.yaml`](application_dag.yaml) file. This YAML file defines the system's name, the Git repository where the component are located, the local path of the media to be used as input in the pipeline, the components name involved in the processing, and the dependencies between these components.
 ```yaml
 System:
   name: my_new_app           
@@ -122,6 +111,15 @@ To get started with ***Kubeflow Autopipe***, follow these steps:
    python3 autopipe.py -i path_to_dag_yaml
    ```
 
+## Features
+- **Automated Video Processing Pipeline**: Simplifies the process of video processing by automating the workflow through a predefined sequence of components.
+- **Modular Component System**: Utilizes a series of components defined by the user.
+- **Flexible Workflow Configuration**: Allows for easy customization of the pipeline through the `application_dag.yaml` configuration file, enabling users to define their own sequence of components and dependencies.
+- **Docker Image Building**: Automatically builds Docker images for each component in the pipeline, ensuring that the components are containerized and ready for execution. Docker Hub registry synchronization is also supported.
+- **Kubeflow Pipeline Execution**: Executes the pipeline in the Kubeflow environment, orchestrating the sequence of components and managing the workflow.
+- **Persistent Volume Container (PVC) Support**: Utilizes PVCs to store input media and output files, ensuring data persistence and efficient data management.
+- **Dex Static Credentials**: Supports the use of static credentials from both inside and outside the cluster without needing user interaction during authentication with the Dex identity provider, ensuring secure access to the Kubeflow environment.
+- **Large File Support**: Integrates with Git LFS to handle large files such as ONNX models, PBMM files, and scorer files, ensuring efficient management and versioning of large assets.
 
 ## License
 This project is open-sourced under the MIT License. See the LICENSE file for more details.
