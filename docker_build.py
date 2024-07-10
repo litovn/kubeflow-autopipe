@@ -8,6 +8,18 @@ from dotenv import load_dotenv
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] - %(message)s', datefmt='%H:%M:%S')
 
 
+def load_dag_configuration(dag_path: str):
+    """
+    Load the yaml dag configuration file, to extract the required information
+
+    :param dag_path: The file path to the YAML configuration file
+    :return: List of component names
+    """
+    with open(dag_path, 'r') as file:
+        data = yaml.safe_load(file)
+        return data['System']['components']
+
+
 def docker_login(username, password):
     """
     Login to Docker registry using provided credentials.
@@ -96,6 +108,9 @@ def push_to_hub(username, component):
 
 def main(base_dir_path: str, template_path: str):
     logging.info("Welcome to the Docker image generator, application starting...\n")
+    # Load the components from the dag configuration file
+    components = load_dag_configuration('application_dag.yaml')
+
     # Read credentials from .env file
     load_dotenv()
     docker_username = os.getenv('DOCKER_USERNAME')
@@ -103,19 +118,15 @@ def main(base_dir_path: str, template_path: str):
     # Docker login
     docker_login(docker_username, docker_password)
 
-    # Base the container creation on the components defined in the dag
-    with open('application_dag.yaml', 'r') as dag_file:
-        app_dag = yaml.safe_load(dag_file)
-
     # Generate container for each component
-    for component in app_dag['System']['components']:
+    for component in components:
         component_path = generate_dockerfile(component, template_path, base_dir_path)
         build_docker_image(docker_username, component, component_path)
     # Generate container for save_video component
     build_docker_image(docker_username, 'save-video', 'src/save-video')
 
     # Push the containers to Docker Hub
-    for component in app_dag['System']['components']:
+    for component in components:
         push_to_hub(docker_username, component)
     push_to_hub(docker_username, 'save-video')
 
