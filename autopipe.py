@@ -1,3 +1,4 @@
+import os
 import yaml
 import subprocess
 import argparse
@@ -27,6 +28,9 @@ def main(input_file):
 
     :param input_file: Path to the application_dag.yaml configuration file
     """
+    if not os.path.exists('output'):
+        os.makedirs('output')
+
     with open(input_file, 'r') as file:
         config = yaml.safe_load(file)
 
