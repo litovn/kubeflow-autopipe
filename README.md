@@ -33,6 +33,9 @@ To achieve this automation, ***Kubeflow Autopipe*** utilizes a modular component
 > **Note:** Kubeflow Autopipe is not a finish product and the deployKF project is still in its early stages, so there may be some bugs or issues that need to be resolved. If you encounter any issues, please report them on the [current GitHub page](https://github.com/litovn/kubeflow-autopipe/issues).
 </details>
 
+**Note:** In Kubeflow Pipelines, you typically use container images hosted in a container registry, such as Docker Hub or Google Container Registry (GCR). This is because the Kubernetes cluster running the pipeline needs to pull the container image, and it generally cannot access images stored only locally on your machine. 
+
+For this purpose a `.env` file was provided to set your credentials. ***Kubeflow Autopipe*** considers [Docker Hub](https://hub.docker.com/) as the chosen registry.
 
 ## Requirements
 Resource | Minimum Requirement
