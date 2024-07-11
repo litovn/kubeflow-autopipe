@@ -7,6 +7,7 @@
 - [About](#about)
 - [Requirements](#requirements)
 - [Execution Order](#execution-order)
+- [Used Conventions](#used-conventions)
 - [Configuration](#configuration)
 - [Getting Started](#getting-started)
     - [deployKF](#i-setup-deploykf)
@@ -74,9 +75,18 @@ By running the [`autopipe.py`](autopipe.py) script in the main folder, the pipel
    2. **Create PVC**: Create a Persistent Volume Container (PVC), with a unique name, to store the input media
    3. **Create Pipeline**: Create the Kubeflow pipeline function and file to be executed, by defining the sequence of components in order of their dependencies
    4. **Execute Pipeline**: Execute the pipeline in the Kubeflow environment, by running its function and file
-   5. **Download Output**: Download the outputs of all the pipeline components from the PVC to the local machine
+   5. **Download Output**: Download the outputs of all the pipeline components from the PVC to the local machine  
    6. **Delete PVC**: Delete the PVC used to store the input media
- 
+
+## Used Conventions
+
+**IMPORTANT:** As of how [`pipeline_manager`](src/pipeline_manager.py) is defined now, by using Persistent Volumes you save the output of each component and pass it to the next one, it takes into consideration that the output of each component is saved following this specific convention:
+```python
+output_file_name = os.path.basename(output_path_dir)
+output_file_name + ".tar.gz"
+``` 
+***Kubeflow Autopipe*** does not extract the `output_file_name` path saved by the previous component (independently of the file's name) and use it as the input for the next component automatically, because it would imply to create and updated a generic pod after each component is run by overwriting the previous one, which is not an optimal approach. 
+
 
 ## Configuration
 The pipeline's behavior is configured through the [`application_dag.yaml`](application_dag.yaml) file. This YAML file defines the system's name, the Git repository where the component are located, the local path of the media to be used as input in the pipeline, the components name involved in the processing, and the dependencies between these components.
