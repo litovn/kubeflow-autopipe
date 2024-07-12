@@ -34,10 +34,10 @@ def main(input_file):
     with open(input_file, 'r') as file:
         config = yaml.safe_load(file)
 
-    # 1. Save video
-    logging.info("Save Video script, starting...\n")
-    input_video = config['System']['input_media']
-    run_script('src/save-video/main.py', input_video)
+    # 1. Save media
+    logging.info("Save Media script, starting...\n")
+    input_media = config['System']['input_media']
+    run_script('src/save-media/main.py', input_media)
 
     # 2. Download components
     if 'repository' in config['System']:

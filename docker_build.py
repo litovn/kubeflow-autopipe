@@ -128,13 +128,13 @@ def main(base_dir_path: str, template_path: str, input_file: str):
     for component in components:
         component_path = generate_dockerfile(component, template_path, base_dir_path)
         build_docker_image(docker_username, component, component_path)
-    # Generate container for save_video component
-    build_docker_image(docker_username, 'save-video', 'src/save-video')
+    # Generate container for save_media component
+    build_docker_image(docker_username, 'save-media', 'src/save-media')
 
     # Push the containers to Docker Hub
     for component in components:
         push_to_hub(docker_username, component)
-    push_to_hub(docker_username, 'save-video')
+    push_to_hub(docker_username, 'save-media')
 
     # Remove unused local docker images
     cleanup_untagged_images()

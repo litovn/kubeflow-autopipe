@@ -106,7 +106,7 @@ def generate_pipeline(username: str, dag_components: list, dag_dependencies: lis
     """
     for component in dag_components:
         create_component(username, component)
-    create_component(username, 'save-video')
+    create_component(username, 'save-media')
 
     @dsl.pipeline(
         name="Kubeflow Autopipe",
@@ -117,9 +117,9 @@ def generate_pipeline(username: str, dag_components: list, dag_dependencies: lis
         component_op = {}
         input_path = init_input
 
-        # Set up the save_video component as first component
+        # Set up the save_media component as first component
         output_dir = f"{base_mount}/"
-        component_op['save-video'] = setup_component('save-video', input_path, output_dir, pvc_name)
+        component_op['save-media'] = setup_component('save-media', input_path, output_dir, pvc_name)
 
         # Set up the other components based on dependencies
         for dependency in dag_dependencies:
@@ -129,7 +129,7 @@ def generate_pipeline(username: str, dag_components: list, dag_dependencies: lis
                 output_dir_this = f"{base_mount}/{this_component}"
                 input_path = f"{base_mount}/{init_input}"
                 component_op[this_component] = setup_component(this_component, input_path, output_dir_this, pvc_name)
-                component_op[this_component].after(component_op['save-video'])
+                component_op[this_component].after(component_op['save-media'])
 
             if next_component not in component_op:
                 output_dir_next = f"{base_mount}/{next_component}"

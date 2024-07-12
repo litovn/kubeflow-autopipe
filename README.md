@@ -18,7 +18,7 @@
 
 
 ## About
-***Kubeflow Autopipe*** is a pipeline tool designed to streamline the process of video processing and analysis by leveraging the power of [Kubeflow Pipeline](https://www.kubeflow.org/docs/components/pipelines/) components, addressing each stage in the ML lifecycle. This tool help with the orchestration of a series of components to automate the workflow of component processing, from initial ingestion through various transformations and analysis, to final output.
+***Kubeflow Autopipe*** is a pipeline tool designed to streamline the process of media processing and analysis by leveraging the power of [Kubeflow Pipeline](https://www.kubeflow.org/docs/components/pipelines/) components, addressing each stage in the ML lifecycle. This tool help with the orchestration of a series of components to automate the workflow of component processing, from initial ingestion through various transformations and analysis, to final output.
 
 To achieve this automation, ***Kubeflow Autopipe*** utilizes a modular component system, allowing users to define a sequence of components and their dependencies through a configuration file. This flexibility enables users to customize the pipeline according to their specific requirements, making it easy to adapt the pipeline to different use cases.
 
@@ -54,7 +54,7 @@ You will need to install the following dependencies:
 
 ## Execution Order
 By running the [`autopipe.py`](autopipe.py) script in the main folder, the pipeline will be executed in the following order:
-1. [`save_video`](src/save-video/main.py) to copy the media file to be used as input to the pipeline, from the defined local path into the `save-video` folder that will be containerized and used as the first component to save the video into a Persistent Volume Container (PVC) when the pipeline will be executed. 
+1. [`save_media`](src/save-media/main.py) to copy the media file to be used as input to the pipeline, from the defined local path into the `save-media` folder that will be containerized and used as the first component to save the media into a Persistent Volume Container (PVC) when the pipeline will be executed. 
 <br /><br />
 2. [`download_components`](download_components.py) to download the components from the defined Git repository in the config file, into the `components` folder.
    1. **Read `application_dag.yaml`**: if defined, else skip download of components
@@ -134,7 +134,7 @@ To get started with ***Kubeflow Autopipe***, follow these steps:
    ```
 
 ## Features
-- **Automated Video Processing Pipeline**: Simplifies the process of video processing by automating the workflow through a predefined sequence of components.
+- **Automated Media Processing Pipeline**: Simplifies the process of media processing by automating the workflow through a predefined sequence of components.
 - **Modular Component System**: Utilizes a series of components defined by the user.
 - **Flexible Workflow Configuration**: Allows for easy customization of the pipeline through the `application_dag.yaml` configuration file, enabling users to define their own sequence of components and dependencies.
 - **Docker Image Building**: Automatically builds Docker images for each component in the pipeline, ensuring that the components are containerized and ready for execution. Docker Hub registry synchronization is also supported.
