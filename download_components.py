@@ -53,7 +53,9 @@ def check_copy_components(src_path: str, components_path: str, components: list)
     missing_components = []
 
     for component in components:
-        if component in repo_folders and os.path.isdir(os.path.join(src_path, component)):
+        if (component in repo_folders and os.path.isdir(os.path.join(src_path, component))) or \
+           (component in repo_folders and os.path.isdir(os.path.join(src_path, 'components', component))) or \
+           (component in repo_folders and os.path.isdir(os.path.join(src_path, 'component', component))):
             src = os.path.join(src_path, component)
             dest = os.path.join(components_path, component)
             if os.path.exists(dest):
