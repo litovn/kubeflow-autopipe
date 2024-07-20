@@ -122,8 +122,8 @@ To get started with ***Kubeflow Autopipe***, follow these steps:
 3. **Set Up Your Environment**:
    <br /> Ensure you have Docker installed and configured. Use the provided `.env` file to set your Docker credentials.
     ```
-    DOCKER_USERNAME = ' '
-    DOCKER_PASSWORD = ' '
+    REGISTER_USERNAME = ' '
+    REGISTER_PASSWORD = ' '
     ```
 4. **Configure the Pipeline**:
    <br /> Edit the `application_dag.yaml` file to customize the pipeline according to your needs. Specify the link to the Git repository where the component are located (if installation needed), the local path of the media to be used as input in the pipeline, the components name involved in the processing, and the dependencies between these components. Check [configuration](#configuration) for the structure of the configuration YAML file.
