@@ -1,7 +1,8 @@
-<h1 align="center">
-  Kubeflow Autopipe
-</h1>
-
+<div align="center">
+  <picture>
+    <img alt="KubeflowAutopipe Logo" src="https://github.com/user-attachments/assets/6ad88b68-c2fe-4b46-aaf6-35a8193bc527" width="340">
+  </picture>
+</div>
 
 ## Sections
 - [About](#about)
@@ -112,7 +113,7 @@ To get started with ***Kubeflow Autopipe***, follow these steps:
 ### ii. Setup Kubeflow Autopipe
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/litovn/kubeflow-components.git
+   git clone https://github.com/litovn/kubeflow-autopipe.git
    ```
 2. **Install Dependencies**:
    ```bash
