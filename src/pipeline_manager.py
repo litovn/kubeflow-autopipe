@@ -146,9 +146,9 @@ def main(input_file: str):
     # Save need data from the configuration file
     dag_components, dag_dependencies, media = load_dag_configuration(input_file)
 
-    # Save docker_username defined in the .env file
+    # Save register_username defined in the .env file
     load_dotenv()
-    docker_username = os.getenv('DOCKER_USERNAME')
+    register_username = os.getenv('register_USERNAME')
 
     # Create the PVC for the pipeline
     pvc_name = create_pvc()
@@ -157,7 +157,7 @@ def main(input_file: str):
     input_filename = os.path.basename(media)
 
     # Generate the pipeline function
-    pipeline_func = generate_pipeline(username=docker_username, dag_components=dag_components, dag_dependencies=dag_dependencies, init_input=input_filename)
+    pipeline_func = generate_pipeline(username=register_username, dag_components=dag_components, dag_dependencies=dag_dependencies, init_input=input_filename)
     pipeline_filename = 'pipeline.yaml'
     # Execute the pipeline
     pipeline_run(pvc_name, pipeline_func, pipeline_filename)

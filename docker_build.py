@@ -21,7 +21,7 @@ def load_dag_configuration(dag_path: str):
         return data['System']['components']
 
 
-def docker_login(username, password):
+def register_login(username, password):
     """
     Login to Docker registry using provided credentials.
     This function constructs a Docker login command using the provided username and password, then executes it.
@@ -74,7 +74,7 @@ def generate_dockerfile(component, template_path, base_dir_path):
     return component_path
 
 
-def build_docker_image(username, component, component_path):
+def build_register_image(username, component, component_path):
     """
     Build Docker image for a given component
 
@@ -119,22 +119,22 @@ def main(base_dir_path: str, template_path: str, input_file: str):
 
     # Read credentials from .env file
     load_dotenv()
-    docker_username = os.getenv('DOCKER_USERNAME')
-    docker_password = os.getenv('DOCKER_PASSWORD')
+    register_username = os.getenv('REGISTER_USERNAME')
+    register_password = os.getenv('REGISTER_PASSWORD')
     # Docker login
-    docker_login(docker_username, docker_password)
+    register_login(register_username, register_password)
 
     # Generate container for each component
     for component in components:
         component_path = generate_dockerfile(component, template_path, base_dir_path)
-        build_docker_image(docker_username, component, component_path)
+        build_register_image(register_username, component, component_path)
     # Generate container for save_media component
-    build_docker_image(docker_username, 'save-media', 'src/save-media')
+    build_register_image(register_username, 'save-media', 'src/save-media')
 
     # Push the containers to Docker Hub
     for component in components:
-        push_to_hub(docker_username, component)
-    push_to_hub(docker_username, 'save-media')
+        push_to_hub(register_username, component)
+    push_to_hub(register_username, 'save-media')
 
     # Remove unused local docker images
     cleanup_untagged_images()
