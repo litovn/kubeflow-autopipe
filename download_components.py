@@ -52,11 +52,18 @@ def check_copy_components(src_path: str, components_path: str, components: list)
     repo_folders = os.listdir(src_path)
     missing_components = []
 
+    if 'components' in repo_folders and os.path.isdir(os.path.join(src_path, 'components')):
+        src_path_repo = os.path.join(src_path, 'components')
+        repo_folders = os.listdir(src_path_repo)
+    elif 'component' in repo_folders and os.path.isdir(os.path.join(src_path, 'component')):
+        src_path_repo = os.path.join(src_path, 'component')
+        repo_folders = os.listdir(src_path_repo)
+    else:
+        src_path_repo = src_path
+
     for component in components:
-        if (component in repo_folders and os.path.isdir(os.path.join(src_path, component))) or \
-           (component in repo_folders and os.path.isdir(os.path.join(src_path, 'components', component))) or \
-           (component in repo_folders and os.path.isdir(os.path.join(src_path, 'component', component))):
-            src = os.path.join(src_path, component)
+        if component in repo_folders and os.path.isdir(os.path.join(src_path_repo, component)):
+            src = os.path.join(src_path_repo, component)
             dest = os.path.join(components_path, component)
             if os.path.exists(dest):
                 shutil.rmtree(dest)
